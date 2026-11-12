@@ -3,4 +3,4 @@ Pillow
 numpy<2.0.0
 gTTS
 streamlit-drawable-canvas==0.9.3
-paho-mqtt
+openai==0.28.0
