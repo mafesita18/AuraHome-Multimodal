@@ -20,10 +20,7 @@ st.title("🏠 AuraHome: Sistema Domótico Multimodal")
 st.markdown("Control inteligente del hogar mediante **Voz, Sentimiento, Reconocimiento Visual y Gestos Táctiles**.")
 
 with st.sidebar:
-    st.header("🔑 Configuración")
-    key_input = st.text_input("OpenAI API Key:", type="password", value=st.session_state.api_key)
-    if key_input:
-        st.session_state.api_key = key_input
+    st.header("🏡 Ambientes")
     st.info("Usa el menú superior para navegar entre los **2 ambientes** de la casa.")
 
 st.markdown("---")
