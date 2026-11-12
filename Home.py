@@ -17,7 +17,7 @@ if "api_key" not in st.session_state:
     st.session_state.api_key = ""
 
 st.title("🏠 AuraHome: Sistema Domótico Multimodal")
-st.markdown("Control inteligente del hogar mediante **Voz, Sentimiento, Reconocimiento Visual y Gestos Táctiles**.")
+st.markdown("Control inteligente del hogar mediante **Comandos de Voz")
 
 with st.sidebar:
     st.header("🏡 Ambientes")
