@@ -1,11 +1,9 @@
 import streamlit as st
-from textblob import TextBlob
+import speech_recognition as sr
 from gtts import gTTS
-import os
 
 st.set_page_config(page_title="Ambiente 1: Sala y Confort", page_icon="🛋️", layout="centered")
 
-# Asegurar variables si entran directo a esta página
 if "luces_sala" not in st.session_state:
     st.session_state.luces_sala = False
     st.session_state.color_luz = "#FFD700"
@@ -18,8 +16,30 @@ def hablar(texto):
     tts.save("respuesta_casa.mp3")
     st.audio("respuesta_casa.mp3", format="audio/mp3", autoplay=True)
 
+def procesar_orden(orden):
+    cmd = orden.lower()
+    if "apaga" in cmd or "dormir" in cmd or "salir" in cmd or "cierra" in cmd:
+        st.session_state.luces_sala = False
+        st.session_state.puerta_abierta = False  # Comunicación bidireccional con Ambiente 2
+        return "Entendido. Apagando luces de la sala y asegurando la puerta principal."
+    elif "enciende" in cmd or "prende" in cmd or "luz" in cmd or "luces" in cmd:
+        st.session_state.luces_sala = True
+        st.session_state.color_luz = "#FFF4B8"
+        return "Luces de la sala encendidas."
+    elif "frío" in cmd or "frio" in cmd or "aire" in cmd or "calor" in cmd:
+        st.session_state.temperatura = 19
+        return "Ajustando el aire acondicionado de la sala a 19 grados."
+    elif "cálida" in cmd or "calida" in cmd or "relaj" in cmd or "noche" in cmd:
+        st.session_state.luces_sala = True
+        st.session_state.color_luz = "#FFB6C1"
+        return "Activando iluminación cálida en la sala."
+    else:
+        st.session_state.luces_sala = True
+        st.session_state.color_luz = "#87CEFA"
+        return f"Comando '{orden}' recibido. Ajustando ambiente de la sala."
+
 st.title("🛋️ Ambiente 1: Sala Inteligente y Confort")
-st.markdown("Interactúa mediante **comandos de voz/texto** o deja que la casa detecte tu **estado de ánimo**.")
+st.markdown("Controla la iluminación, el clima y el cierre general del hogar mediante **comandos de voz**.")
 
 # Visualización física simulada
 color_caja = st.session_state.color_luz if st.session_state.luces_sala else "#1E1E1E"
@@ -36,44 +56,26 @@ st.markdown(
 )
 
 st.markdown("---")
-st.subheader("🎙️ Modalidad 1: Comando o Estado de Ánimo")
+st.subheader("🎙️ Control por Voz")
+st.caption("Prueba decir comandos como: *'Enciende las luces'*, *'Pon luz cálida'*, *'Hace calor, prende el aire'* o *'Apaga todo y cierra la puerta'*.")
 
-# Entrada de audio nativa de Streamlit o texto
-audio_val = st.audio_input("Graba una nota de voz (opcional)")
-comando = st.text_input("O escribe cómo te sientes / qué orden quieres dar:", placeholder="Ej: Llegué súper cansada / Apaga todo y cierra la casa")
+audio_val = st.audio_input("Presiona el micrófono y di tu comando:")
 
-if st.button("⚡ Ejecutar en Sala", type="primary"):
-    if comando:
-        cmd = comando.lower()
-        analisis = TextBlob(comando)
-        polaridad = analisis.sentiment.polarity
-
-        if "apaga" in cmd or "dormir" in cmd or "salir" in cmd:
-            st.session_state.luces_sala = False
-            st.session_state.puerta_abierta = False  # Comunicación bidireccional al Ambiente 2
-            respuesta = "Entendido. Apagando luces de la sala y asegurando la puerta principal."
-        elif "enciende" in cmd or "prende" in cmd or "luz" in cmd:
-            st.session_state.luces_sala = True
-            st.session_state.color_luz = "#FFF4B8"
-            respuesta = "Luces de la sala encendidas en modo estándar."
-        elif polaridad < 0 or "cansad" in cmd or "estres" in cmd or "triste" in cmd:
-            st.session_state.luces_sala = True
-            st.session_state.color_luz = "#FFB6C1"  # Luz cálida relajante
-            st.session_state.temperatura = 20
-            respuesta = "Detecto que tuviste un día pesado. Activando iluminación cálida relajante y clima a 20 grados."
-        else:
-            st.session_state.luces_sala = True
-            st.session_state.color_luz = "#87CEFA"
-            respuesta = "Activando ambiente energético en la sala."
-
-        st.session_state.ultimo_evento = f"Sala: {respuesta}"
-        st.success(respuesta)
-        hablar(respuesta)
-        st.rerun()
-    elif audio_val:
-        st.session_state.luces_sala = True
-        st.session_state.color_luz = "#DDA0DD"
-        respuesta = "Comando de voz recibido. Activando escena ambiental en la sala."
-        st.session_state.ultimo_evento = f"Voz en Sala: {respuesta}"
-        st.success(respuesta)
-        hablar(respuesta)
+if audio_val is not None:
+    if st.button("⚡ Ejecutar Comando de Voz", type="primary"):
+        recognizer = sr.Recognizer()
+        try:
+            with sr.AudioFile(audio_val) as source:
+                audio_data = recognizer.record(source)
+                texto_reconocido = recognizer.recognize_google(audio_data, language="es-ES")
+            
+            st.info(f"🗣️ **Voz reconocida:** \"{texto_reconocido}\"")
+            respuesta = procesar_orden(texto_reconocido)
+            st.session_state.ultimo_evento = f"Voz en Sala: {respuesta}"
+            st.success(respuesta)
+            hablar(respuesta)
+            st.rerun()
+        except sr.UnknownValueError:
+            st.warning("No se entendió bien el audio. Intenta hablar más claro cerca del micrófono.")
+        except Exception as e:
+            st.error(f"Error al procesar el audio: {e}")
