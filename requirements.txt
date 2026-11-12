@@ -1,0 +1,7 @@
+streamlit
+Pillow
+numpy<2.0.0
+gTTS
+textblob
+streamlit-drawable-canvas==0.9.3
+openai==0.28.0
